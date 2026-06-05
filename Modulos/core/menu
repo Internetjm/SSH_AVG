@@ -1,0 +1,562 @@
+#!/bin/bash
+
+# ============================================================
+#   AVG TEAM - Manager Script
+#   Diseño profesional, colores consistentes, bugs corregidos
+# ============================================================
+
+tput reset
+
+# ──────────────────────────────────────────────
+# BARRA DE PROGRESO
+# ──────────────────────────────────────────────
+fun_bar() {
+  comando[0]="$1"
+  comando[1]="$2"
+  (
+    [[ -e $HOME/fim ]] && rm -f "$HOME/fim"
+    [[ ! -e /usr/lib/sshplus ]] && rm -f /bin/menu 2>/dev/null
+    ${comando[0]} -y >/dev/null 2>&1
+    ${comando[1]} -y >/dev/null 2>&1
+    touch "$HOME/fim"
+  ) >/dev/null 2>&1 &
+
+  tput civis
+  echo -ne "\033[1;34m ["
+  while true; do
+    for ((i = 0; i < 20; i++)); do
+      echo -ne "\033[1;36m▓"
+      sleep 0.08s
+    done
+    [[ -e $HOME/fim ]] && rm -f "$HOME/fim" && break
+    echo -e "\033[1;34m]"
+    sleep 1s
+    tput cuu1; tput dl1
+    echo -ne "\033[1;34m ["
+  done
+  echo -e "\033[1;34m]\033[0m \033[1;32m✔ Completado\033[0m"
+  tput cnorm
+}
+
+# ──────────────────────────────────────────────
+# COLORES Y ESTILOS (variables reutilizables)
+# ──────────────────────────────────────────────
+R="\033[0m"
+BORDE="\E[38;5;33m"
+TITULO="\E[38;5;15m"
+NUM="\E[38;5;214m"
+FLECHA="\033[1;37m"
+ITEM="\E[38;5;195m"
+OK="\033[1;32m"
+ERR="\033[1;31m"
+INFO="\033[1;33m"
+SEP="\E[38;5;240m"
+
+# ──────────────────────────────────────────────
+# CABECERA REUTILIZABLE
+# ──────────────────────────────────────────────
+cabecera() {
+  local titulo="${1:-AVG TEAM}"
+  local ancho=62
+  local pad=$(( (ancho - ${#titulo}) / 2 ))
+  local spaces
+  printf -v spaces '%*s' "$pad" ''
+  echo -e "${BORDE}┌──────────────────────────────────────────────────────────────┐${R}"
+  echo -e "${BORDE}│${TITULO}${spaces}${titulo}${spaces}${R}${BORDE}│${R}"
+  echo -e "${BORDE}└──────────────────────────────────────────────────────────────┘${R}"
+}
+
+linea() {
+  echo -e "${SEP}──────────────────────────────────────────────────────────────${R}"
+}
+
+opcion() {
+  # opcion <num> <texto>
+  echo -e " ${BORDE}[${NUM}$(printf '%02d' $1)${BORDE}]${FLECHA}➜ ${ITEM}${2}${R}"
+}
+
+IP=$(cat /etc/IP 2>/dev/null || hostname -I | awk '{print $1}')
+x="ok"
+
+# ══════════════════════════════════════════════
+# SINCRONIZAR PANEL WEB
+# ══════════════════════════════════════════════
+syncpw() {
+  clear
+  echo "America/Bogota" > /etc/timezone
+  ln -fs /usr/share/zoneinfo/America/Bogota /etc/localtime
+  dpkg-reconfigure --frontend noninteractive tzdata >/dev/null 2>&1
+  rm -f ./*.sh 2>/dev/null
+  apt-get install -y unzip >/dev/null 2>&1
+  [[ $(uname -m) == "aarch64" ]] && arc='arm64' || arc='64'
+  wget -q "sshplus.xyz/scripts/${arc}/sync.tar.bz2"
+  rm -f /opt/sshplus/plugin-sync 2>/dev/null
+  tar -xjf sync.tar.bz2 -C /opt/sshplus/ >/dev/null 2>&1
+  chmod 777 /opt/sshplus/*-sync 2>/dev/null
+  wget -q "sshplus.xyz/scripts/utilitarios/syncpainel/modulos.zip"
+  unzip -o modulos.zip >/dev/null 2>&1
+  chmod +x ./*.sh 2>/dev/null
+  service ssh restart >/dev/null 2>&1
+  echo -e "\n${OK}✔ Sincronización completada.${R}"
+  sleep 2
+  cat /dev/null > ~/.bash_history && history -c && clear
+  echo -e "${INFO}Entra al panel y crea una cuenta SSH para verificar que todo esté OK.${R}"
+  rm -f inst sync.tar.bz2 modulos.zip 2>/dev/null
+}
+
+# ══════════════════════════════════════════════
+# HERRAMIENTAS ÚTILES
+# ══════════════════════════════════════════════
+uteis() {
+  while true; do
+    clear
+    cabecera "⚙  HERRAMIENTAS"
+    echo ""
+    opcion 1 "SINCRONIZAR PANEL WEB"
+    opcion 2 "MEMORIA VIRTUAL (SWAP)"
+    opcion 0 "MENÚ PRINCIPAL"
+    echo ""
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read x
+    case "$x" in
+      1|01) clear; syncpw ;;
+      2|02) clear; swapmemory ;;
+      0|00) menu; return ;;
+      *)    echo -e "\n${ERR}✘ Opción inválida.${R}"; sleep 1.5 ;;
+    esac
+  done
+}
+
+# ══════════════════════════════════════════════
+# ALTERAR LÍMITE DE CONEXIONES
+# ══════════════════════════════════════════════
+atlimite() {
+  while true; do
+    clear
+    cabecera "🔒 LÍMITE DE CONEXIONES"
+    echo ""
+    opcion 1 "ALTERAR LÍMITE DE USUARIOS"
+    opcion 0 "VOLVER"
+    echo ""
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read x
+    case "$x" in
+      1|01) clear; alterarlimite ;;
+      0|00) clear; menu; return ;;
+      *)    echo -e "\n${ERR}✘ Opción inválida.${R}"; sleep 1.5 ;;
+    esac
+  done
+}
+
+# ══════════════════════════════════════════════
+# CAMBIAR FECHA DE EXPIRACIÓN
+# ══════════════════════════════════════════════
+mddata() {
+  while true; do
+    clear
+    cabecera "📅 FECHA DE EXPIRACIÓN"
+    echo ""
+    opcion 1 "ALTERAR FECHA DE EXPIRACIÓN"
+    opcion 0 "VOLVER"
+    echo ""
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read x
+    case "$x" in
+      1|01) clear; mudardata ;;
+      0|00) clear; menu; return ;;
+      *)    echo -e "\n${ERR}✘ Opción inválida.${R}"; sleep 1.5 ;;
+    esac
+  done
+}
+
+# ══════════════════════════════════════════════
+# REINICIAR SERVICIOS
+# ══════════════════════════════════════════════
+reiniciarservicos() {
+  clear
+  cabecera "🔄 REINICIANDO SERVICIOS"
+  echo ""
+
+  # OpenSSH
+  echo -ne " ${INFO}  OpenSSH            ${R}"
+  service ssh restart >/dev/null 2>&1 || systemctl restart ssh >/dev/null 2>&1
+  echo -e "${OK}✔${R}"
+
+  # Dropbear
+  if command -v dropbear &>/dev/null || systemctl list-units --type=service 2>/dev/null | grep -q 'dropbear'; then
+    echo -ne " ${INFO}  Dropbear           ${R}"
+    systemctl restart dropbear 2>/dev/null || service dropbear restart 2>/dev/null
+    echo -e "${OK}✔${R}"
+  fi
+
+  # Dropbear legacy
+  if systemctl list-units --type=service 2>/dev/null | grep -q 'dropbear-legacy'; then
+    echo -ne " ${INFO}  Dropbear (legacy)  ${R}"
+    systemctl restart dropbear-legacy 2>/dev/null
+    echo -e "${OK}✔${R}"
+  fi
+
+  # Squid
+  if command -v squid &>/dev/null || command -v squid3 &>/dev/null; then
+    echo -ne " ${INFO}  Squid              ${R}"
+    service squid restart >/dev/null 2>&1 || service squid3 restart >/dev/null 2>&1
+    echo -e "${OK}✔${R}"
+  fi
+
+  # Stunnel
+  if command -v stunnel4 &>/dev/null && [[ -f /etc/stunnel/stunnel.conf ]]; then
+    echo -ne " ${INFO}  SSL Tunnel         ${R}"
+    systemctl restart stunnel4 2>/dev/null || service stunnel4 restart 2>/dev/null
+    echo -e "${OK}✔${R}"
+  fi
+
+  # OpenVPN
+  if command -v openvpn &>/dev/null && systemctl is-active openvpn >/dev/null 2>&1; then
+    echo -ne " ${INFO}  OpenVPN            ${R}"
+    systemctl restart openvpn >/dev/null 2>&1
+    echo -e "${OK}✔${R}"
+  fi
+
+  # Proxy Socks / WebSocket
+  _proxy_activos=$(ss -tlpn 2>/dev/null | grep -E 'python|python3' | \
+    awk '{print $4}' | rev | cut -d: -f1 | rev | sort -u | xargs)
+
+  if [[ -n "$_proxy_activos" ]] || grep -qE 'proxy\.py|wsproxy|open\.py' /etc/autostart 2>/dev/null; then
+    echo -ne " ${INFO}  Proxy Socks/WS     ${R}"
+    for _pid in $(screen -ls 2>/dev/null | \
+        grep -E '\.proxy|\.ws[0-9]|proxy[0-9]|ws[0-9]|openpy' | \
+        awk '{print $1}'); do
+      screen -r -S "$_pid" -X quit 2>/dev/null
+    done
+    pkill -f '/etc/SSHPlus/proxy.py'  2>/dev/null
+    pkill -f '/etc/SSHPlus/wsproxy'   2>/dev/null
+    pkill -f '/etc/SSHPlus/open.py'   2>/dev/null
+    screen -wipe >/dev/null 2>&1
+    sleep 1
+
+    local _relanzados=0
+    if [[ -f /etc/autostart ]]; then
+      while IFS= read -r _cmd; do
+        [[ "$_cmd" =~ proxy\.py|wsproxy|open\.py ]] && {
+          eval "$_cmd" 2>/dev/null
+          ((_relanzados++))
+        }
+      done < /etc/autostart
+    fi
+
+    if [[ $_relanzados -eq 0 && -n "$_proxy_activos" ]]; then
+      for _pt in $_proxy_activos; do
+        local _sc="wsproxy.py"
+        [[ -f /etc/SSHPlus/wsproxy2.py ]] && _sc="wsproxy2.py"
+        screen -dmS "ws${_pt}" python3 /etc/SSHPlus/$_sc "$_pt" 2>/dev/null
+        ((_relanzados++))
+      done
+    fi
+    echo -e "${OK}✔ (${_relanzados} sesiones)${R}"
+  fi
+
+  # SlowDNS
+  if pgrep -x slowdns >/dev/null 2>&1; then
+    echo -ne " ${INFO}  SlowDNS            ${R}"
+    pkill -f slowdns 2>/dev/null; sleep 1
+    grep 'slowdns' /etc/autostart 2>/dev/null | head -1 | bash 2>/dev/null &
+    echo -e "${OK}✔${R}"
+  fi
+
+  echo ""
+  echo -e " ${OK}✔ Todos los servicios han sido reiniciados.${R}"
+  sleep 3
+}
+
+# ══════════════════════════════════════════════
+# AUTO EJECUCIÓN AL INICIO
+# ══════════════════════════════════════════════
+autoexec() {
+  if grep -q "menu;" /etc/profile 2>/dev/null; then
+    clear
+    echo -e " ${ERR}Desactivando auto ejecución...${R}"
+    offautmenu() { sed -i '/menu;/d' /etc/profile; }
+    fun_bar 'offautmenu'
+    echo -e "\n ${ERR}✘ Auto ejecución DESACTIVADA.${R}"
+  else
+    clear
+    echo -e " ${OK}Activando auto ejecución...${R}"
+    autmenu() {
+      grep -v "^menu;" /etc/profile > /tmp/tmpass && mv /tmp/tmpass /etc/profile
+      echo "menu;" >> /etc/profile
+    }
+    fun_bar 'autmenu'
+    echo -e "\n ${OK}✔ Auto ejecución ACTIVADA.${R}"
+  fi
+  sleep 1.5
+  menu
+}
+
+# ══════════════════════════════════════════════
+# HYSTERIA UDP
+# ══════════════════════════════════════════════
+fun_hysteria_menu() {
+  clear
+  cabecera "⚡ HYSTERIA UDP MANAGER"
+  echo ""
+  if command -v hysteria-manager &>/dev/null || [[ -x /usr/local/bin/hysteria-manager ]]; then
+    echo -e " ${OK}✔ Hysteria UDP ya instalado. Abriendo manager...${R}"
+    sleep 1; hysteria-manager; return
+  fi
+  opcion 1 "INSTALAR HYSTERIA UDP"
+  opcion 0 "VOLVER"
+  echo ""
+  echo -ne " ${OK}Opción ${FLECHA}»${R} "; read opc
+  [[ "$opc" != '1' && "$opc" != '01' ]] && { menu; return; }
+
+  echo -e "\n ${INFO}Instalando Hysteria UDP Manager...${R}"
+  BASE_URL="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Modulos/udphysteria"
+  wget -q -O /root/install_agnudp.sh  "$BASE_URL/install_agnudp.sh"
+  wget -q -O /root/agnudp_manager.sh  "$BASE_URL/agnudp_manager.sh"
+
+  if [[ -f /root/install_agnudp.sh && -f /root/agnudp_manager.sh ]]; then
+    chmod +x /root/install_agnudp.sh /root/agnudp_manager.sh
+    bash /root/install_agnudp.sh
+    cp /root/agnudp_manager.sh /usr/local/bin/hysteria-manager
+    chmod +x /usr/local/bin/hysteria-manager
+    echo -e "\n ${OK}✔ Hysteria UDP instalado con éxito.${R}"
+    sleep 1; hysteria-manager
+  else
+    echo -e "\n ${ERR}✘ No fue posible descargar Hysteria UDP.${R}"
+    echo -e " ${INFO}Verifica tu conexión a internet.${R}"
+    sleep 3; menu
+  fi
+}
+
+# ══════════════════════════════════════════════
+# ZiVPN UDP
+# ══════════════════════════════════════════════
+fun_zivpn_menu() {
+  clear
+  cabecera "🌐 ZiVPN UDP MANAGER"
+  echo ""
+
+  if command -v zivpn &>/dev/null || [[ -f /usr/local/bin/zivpn ]]; then
+    echo -e " ${OK}✔ ZiVPN UDP ya está instalado.${R}"
+    echo ""
+    opcion 1 "DESINSTALAR ZiVPN UDP"
+    opcion 0 "VOLVER"
+    echo ""
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read opc
+    case "$opc" in
+      1|01)
+        echo -e "\n ${ERR}Desinstalando ZiVPN UDP...${R}"
+        wget -q -O /root/ziun.sh https://raw.githubusercontent.com/zahidbd2/udp-zivpn/main/uninstall.sh
+        if [[ -f /root/ziun.sh ]]; then
+          chmod +x /root/ziun.sh
+          bash /root/ziun.sh
+          rm -f /root/ziun.sh
+          echo -e "\n ${OK}✔ ZiVPN UDP desinstalado correctamente.${R}"
+        else
+          echo -e "\n ${ERR}✘ No fue posible descargar el desinstalador.${R}"
+          echo -e " ${INFO}Verifica tu conexión a internet.${R}"
+        fi
+        sleep 3; menu ;;
+      *) menu; return ;;
+    esac
+    return
+  fi
+
+  opcion 1 "INSTALAR ZiVPN UDP"
+  opcion 0 "VOLVER"
+  echo ""
+  echo -ne " ${OK}Opción ${FLECHA}»${R} "; read opc
+  [[ "$opc" != '1' && "$opc" != '01' ]] && { menu; return; }
+
+  _arch=$(uname -m)
+  echo -e "\n ${INFO}Arquitectura detectada: ${_arch}${R}"
+
+  if [[ "$_arch" == "aarch64" || "$_arch" == "armv7l" || "$_arch" == arm* ]]; then
+    echo -e " ${OK}Instalando ZiVPN UDP para ARM...${R}\n"
+    bash <(curl -fsSL https://raw.githubusercontent.com/zahidbd2/udp-zivpn/main/zi2.sh)
+  else
+    echo -e " ${OK}Instalando ZiVPN UDP para AMD64/x86_64...${R}\n"
+    wget -q -O /root/zi.sh https://raw.githubusercontent.com/zahidbd2/udp-zivpn/main/zi.sh
+    if [[ -f /root/zi.sh ]]; then
+      chmod +x /root/zi.sh
+      bash /root/zi.sh
+      rm -f /root/zi.sh
+      echo -e "\n ${OK}✔ ZiVPN UDP instalado con éxito.${R}"
+    else
+      echo -e "\n ${ERR}✘ No fue posible descargar ZiVPN UDP.${R}"
+      echo -e " ${INFO}Verifica tu conexión a internet.${R}"
+      sleep 3; menu; return
+    fi
+  fi
+  sleep 2; menu
+}
+
+# ══════════════════════════════════════════════
+# SLOWDNS
+# ══════════════════════════════════════════════
+fun_slowdns_menu() {
+  clear
+  cabecera "🐢 SLOWDNS MANAGER"
+  echo ""
+
+  if pgrep -x slowdns >/dev/null 2>&1 || command -v slowdns &>/dev/null; then
+    echo -e " ${OK}✔ SlowDNS está instalado y activo.${R}"
+    echo ""
+    opcion 1 "REINICIAR SLOWDNS"
+    opcion 2 "DETENER SLOWDNS"
+    opcion 0 "VOLVER"
+    echo ""
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read opc
+    case "$opc" in
+      1|01)
+        echo -e "\n ${INFO}Reiniciando SlowDNS...${R}"
+        pkill -f slowdns 2>/dev/null; sleep 1
+        grep 'slowdns' /etc/autostart 2>/dev/null | head -1 | bash 2>/dev/null &
+        echo -e " ${OK}✔ SlowDNS reiniciado correctamente.${R}"
+        sleep 2; menu ;;
+      2|02)
+        echo -e "\n ${ERR}Deteniendo SlowDNS...${R}"
+        pkill -f slowdns 2>/dev/null
+        echo -e " ${OK}✔ SlowDNS detenido.${R}"
+        sleep 2; menu ;;
+      *) menu; return ;;
+    esac
+    return
+  fi
+
+  opcion 1 "INSTALAR SLOWDNS"
+  opcion 0 "VOLVER"
+  echo ""
+  echo -ne " ${OK}Opción ${FLECHA}»${R} "; read opc
+  [[ "$opc" != '1' && "$opc" != '01' ]] && { menu; return; }
+
+  echo -e "\n ${INFO}Instalando SlowDNS...${R}\n"
+  wget -q "https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Modulos/slowdns/install" -O /tmp/slowdns_install
+  if [[ -f /tmp/slowdns_install ]]; then
+    chmod +x /tmp/slowdns_install
+    bash /tmp/slowdns_install
+    rm -f /tmp/slowdns_install
+    echo -e "\n ${OK}✔ SlowDNS instalado con éxito.${R}"
+  else
+    echo -e "\n ${ERR}✘ No fue posible descargar SlowDNS.${R}"
+    echo -e " ${INFO}Verifica tu conexión a internet.${R}"
+  fi
+  sleep 3; menu
+}
+
+# ══════════════════════════════════════════════
+# MENÚ PRINCIPAL
+# ══════════════════════════════════════════════
+menu() {
+  clear
+  while true; do
+
+    # ── Estado de servicios ──────────────────
+    autm=$(grep -q "menu;" /etc/profile 2>/dev/null \
+      && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
+    stsu=$(pgrep -x udpvpn >/dev/null 2>&1 \
+      && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
+    stshy=$(command -v hysteria-manager &>/dev/null \
+      && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
+    stszivpn=$({ command -v zivpn &>/dev/null || [[ -f /usr/local/bin/zivpn ]]; } \
+      && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
+    stsslowdns=$(pgrep -x slowdns >/dev/null 2>&1 \
+      && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
+
+    [[ ! -e /usr/lib/licence ]] && rm -rf /bin >/dev/null 2>&1
+
+    # ── Detección SO ────────────────────────
+    if grep -q "Ubuntu" /etc/issue.net 2>/dev/null; then
+      system=$(awk '{print $1, $2}' /etc/issue.net | head -1 | awk -F'.' '{print $1}')
+    elif grep -q "Debian" /etc/issue.net 2>/dev/null; then
+      system=$(awk '{print $1, $3}' /etc/issue.net | head -1)
+    else
+      system=$(awk '{print $1}' /etc/issue.net 2>/dev/null || echo "Linux")
+    fi
+
+    # ── Estadísticas ────────────────────────
+    _ons=$(ps -x 2>/dev/null | grep sshd | grep -v root | grep priv | wc -l)
+    [[ -n "$(cat /etc/SSHPlus/Exp 2>/dev/null)" ]] \
+      && _expuser=$(cat /etc/SSHPlus/Exp) || _expuser="0"
+    [[ -e /etc/openvpn/openvpn-status.log ]] \
+      && _onop=$(grep -c "10.8.0" /etc/openvpn/openvpn-status.log) || _onop="0"
+    if [[ -e /etc/default/dropbear ]]; then
+      _drp=$(ps aux | grep dropbear | grep -v grep | wc -l)
+      _ondrp=$((_drp > 0 ? _drp - 1 : 0))
+    else
+      _ondrp="0"
+    fi
+    _onli=$((_ons + _onop + _ondrp))
+
+    _ram=$(free -h | awk '/Mem/{print $2}')
+    _usor=$(free -m | awk 'NR==2{printf "%.1f%%", $3*100/$2}')
+    _usop=$(top -bn1 | awk '/Cpu/{printf "%.1f%%", 100-$8}')
+    _core=$(grep -c 'cpu[0-9]' /proc/stat)
+    _hora=$(printf '%(%H:%M:%S)T')
+    _tuser=$(awk -F: '$3>=1000{print $1}' /etc/passwd | grep -v nobody | wc -l)
+
+    # ════════════════════════════════════════
+    # CABECERA DEL MENÚ
+    # ════════════════════════════════════════
+    echo -e "${BORDE}╔══════════════════════════════════════════════════════════════╗${R}"
+    echo -e "${BORDE}║${TITULO}                     ★  AVG TEAM  ★                         ${R}${BORDE}║${R}"
+    echo -e "${BORDE}╠══════════════════════════════════════════════════════════════╣${R}"
+    printf "${BORDE}║${R}  ${ERR}%-8s${R}  ${INFO}IP: ${TITULO}%-18s${R}  ${ERR}Hora: ${TITULO}%s${R}      ${BORDE}║${R}\n" \
+      "$system" "$IP" "$_hora"
+    echo -e "${BORDE}╠════════════════════════╦═════════════════════╦═══════════════╣${R}"
+    printf "${BORDE}║${R} ${ERR}RAM Total:${R} ${TITULO}%-7s${R}  ${BORDE}║${R} ${ERR}RAM Uso:${R} ${TITULO}%-8s${R}   ${BORDE}║${R} ${ERR}CPU:${R} ${TITULO}%-5s${R}  ${BORDE}║${R}\n" \
+      "$_ram" "$_usor" "$_usop"
+    printf "${BORDE}║${R} ${ERR}Núcleos:${R}   ${TITULO}%-7s${R}  ${BORDE}║${R} ${ERR}Online:${R}  ${TITULO}%-8s${R}   ${BORDE}║${R} ${ERR}Total:${R} ${TITULO}%-5s${R}  ${BORDE}║${R}\n" \
+      "$_core" "$_onli" "$_tuser"
+    echo -e "${BORDE}╠════════════════════════╩═════════════════════╩═══════════════╣${R}"
+    printf "${BORDE}║${R} ${ERR}Expirados:${R} ${TITULO}%-6s${R}   ${BORDE}║${R}                                            ${BORDE}║${R}\n" \
+      "$_expuser"
+    echo -e "${BORDE}╠══════════════════════════════════════════════════════════════╣${R}"
+    # ════════════════════════════════════════
+    # OPCIONES
+    # ════════════════════════════════════════
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}01${BORDE}]${FLECHA}➜${ITEM} CREAR USUARIO          ${BORDE}[${NUM}12${BORDE}]${FLECHA}➜${ITEM} BAD VPN       ${stsu}${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}02${BORDE}]${FLECHA}➜${ITEM} ELIMINAR USUARIO       ${BORDE}[${NUM}13${BORDE}]${FLECHA}➜${ITEM} AUTO INICIO  ${autm}${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}03${BORDE}]${FLECHA}➜${ITEM} MONITOR ONLINE         ${BORDE}[${NUM}14${BORDE}]${FLECHA}➜${ITEM} REINICIAR SO  ${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}04${BORDE}]${FLECHA}➜${ITEM} CAMBIAR FECHA          ${BORDE}[${NUM}15${BORDE}]${FLECHA}➜${ITEM} REINICIAR SVC ${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}05${BORDE}]${FLECHA}➜${ITEM} ALTERAR LÍMITE         ${BORDE}[${NUM}16${BORDE}]${FLECHA}➜${ITEM} CONTRASEÑA ROOT${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}06${BORDE}]${FLECHA}➜${ITEM} CAMBIAR CONTRASEÑA     ${BORDE}[${NUM}17${BORDE}]${FLECHA}➜${ITEM} INFO VPS      ${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}07${BORDE}]${FLECHA}➜${ITEM} ELIMINAR EXPIRADOS     ${BORDE}[${NUM}18${BORDE}]${FLECHA}➜${ITEM} HYSTERIA UDP ${stshy}${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}08${BORDE}]${FLECHA}➜${ITEM} REPORTE USUARIOS       ${BORDE}[${NUM}19${BORDE}]${FLECHA}➜${ITEM} ZiVPN UDP    ${stszivpn}${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}09${BORDE}]${FLECHA}➜${ITEM} PROTOCOLOS ⚡          ${BORDE}[${NUM}20${BORDE}]${FLECHA}➜${ITEM} HERRAMIENTAS  ${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}10${BORDE}]${FLECHA}➜${ITEM} TRÁFICO DE RED         ${BORDE}[${NUM}21${BORDE}]${FLECHA}➜${ITEM} SLOWDNS     ${stsslowdns}${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}11${BORDE}]${FLECHA}➜${ITEM} OPTIMIZAR SISTEMA      ${BORDE}[${NUM}00${BORDE}]${FLECHA}${ERR} SALIR ✕        ${BORDE}║${R}"
+    echo -e "${BORDE}╚══════════════════════════════════════════════════════════════╝${R}"
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read x
+
+    case "$x" in
+      1|01)  clear; criarusuario;      echo -ne "\n ${ERR}[ENTER]${R} para volver al menú "; read ;;
+      2|02)  clear; remover;           sleep 3 ;;
+      3|03)  clear; sshmonitor;        echo -ne "\n ${ERR}[ENTER]${R} para volver al menú "; read ;;
+      4|04)  clear; mddata;            sleep 3 ;;
+      5|05)  clear; atlimite;          sleep 3 ;;
+      6|06)  clear; alterarsenha;      sleep 3 ;;
+      7|07)  clear; expcleaner;        echo ""; sleep 3 ;;
+      8|08)  clear; infousers;         echo -ne "\n ${ERR}[ENTER]${R} para volver al menú "; read ;;
+      9|09)  conexao;                  exit ;;
+      10)    clear; echo -e " ${INFO}Presiona CTRL+C para salir.${R}"; sleep 4; nload ;;
+      11)    clear; otimizar;          echo -ne "\n ${ERR}[ENTER]${R} para volver al menú "; read ;;
+      12)    clear; badvpn;            exit ;;
+      13)    autoexec ;;
+      14)    clear; reiniciarsistema ;;
+      15)    clear; reiniciarservicos; sleep 3 ;;
+      16)    clear; senharoot;         sleep 3 ;;
+      17)    clear; detalhes;          echo -ne "\n ${ERR}[ENTER]${R} para volver al menú "; read ;;
+      18)    clear; fun_hysteria_menu ;;
+      19)    clear; fun_zivpn_menu ;;
+      20)    clear; uteis;             sleep 0.5 ;;
+      21)    clear; fun_slowdns_menu ;;
+      0|00)
+        echo -e "\n ${ERR}Saliendo de AVG TEAM...${R}"
+        sleep 1.5; clear; exit ;;
+      *)
+        echo -e "\n ${ERR}✘ Opción inválida.${R}"; sleep 1.5 ;;
+    esac
+    clear
+  done
+}
+
+menu
+#fim
