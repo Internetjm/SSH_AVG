@@ -1,4 +1,4 @@
-# SCRIPT AVG TEAMVPN 2026 🐒
+# SCRIPT AVG TEAM 2026
 ```
 wget https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Plus && chmod 777 Plus && ./Plus
 ```
