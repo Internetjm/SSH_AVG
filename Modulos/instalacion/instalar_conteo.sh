@@ -3,7 +3,7 @@
 # ║  instalar_conteo.sh - Servidor conteo online AVG TEAM VPN                    ║
 # ║  Archivos en /root | HTTP :8081 | TCP :8082                             ║
 # ║  Ubuntu 18, 20, 22, 24, 25, 26, 27+ | Node.js via NVM                  ║
-# ║  t:me/JuanitoProSniif                                                    ║
+# ║  t:me/JM_VPN19                                                   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 VERDE='\033[0;32m'; ROJO='\033[0;31m'; AMARILLO='\033[1;33m'; AZUL='\033[0;34m'; NC='\033[0m'

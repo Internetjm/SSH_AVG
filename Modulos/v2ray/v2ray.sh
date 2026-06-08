@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# * Creado y modificado por t:me/JuanitoProSniff
+# * Creado y modificado por t:me/JM_VPN19
 # ============================================================
 # V2RAY_MODULE_VERSION: msyvpn-v2ray-9
 #
@@ -41,7 +41,7 @@ _V2RAY_TROJAN_PATH="/trojan-ws"
 _V2RAY_ROUTE_CONF="/etc/SSHPlus/v2ray-route.conf"
 _V2RAY_NGINX_PORT="2096"
 _V2RAY_NGINX_HTTP_PORT="2095"
-_V2RAY_REPO_BASE="${_REPO_BASE:-https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main}"
+_V2RAY_REPO_BASE="${_REPO_BASE:-https://raw.githubusercontent.com/Internetjm/SSH_AVG/main}"
 _V2RAY_WSPROXY_PATH="/etc/SSHPlus/wsproxy.py"
 _V2RAY_WSPROXY_VERSION="msyvpn-v2ray-3"
 
@@ -1368,8 +1368,8 @@ EOF
         _sdns_ns=$(echo "$_sdns_ns" | xargs)
         if [[ -n "$_sdns_ns" ]]; then
             echo -e "\033[1;33m  Instalando SlowDNS con NS: $_sdns_ns\033[0m"
-            local _SDNS_REPO="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main"
-            local _SDNS_RAW="https://github.com/juanitoprosniff/scriptsshmsy/raw/main"
+            local _SDNS_REPO="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main"
+            local _SDNS_RAW="https://github.com/Internetjm/SSH_AVG/raw/main"
 
             # Descargar e instalar
             apt-get install -y screen iptables >/dev/null 2>&1
@@ -1431,7 +1431,7 @@ EOF
     read _want_hyst
     local _hyst_done=0
     if [[ "$_want_hyst" =~ ^[sSyY]$ ]]; then
-        local _HYST_REPO="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main"
+        local _HYST_REPO="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main"
         echo -e "\033[1;33m  Instalando UDP Hysteria...\033[0m"
         local _hyst_tmp
         _hyst_tmp=$(mktemp /tmp/install_agnudp_XXXXXX.sh)

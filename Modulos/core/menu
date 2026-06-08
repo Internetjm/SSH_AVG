@@ -260,6 +260,13 @@ reiniciarservicos() {
     echo -e "${OK}✔${R}"
   fi
 
+  # Xray Core (Añadido reinicio nativo)
+  if systemctl list-units --type=service 2>/dev/null | grep -q 'xray'; then
+    echo -ne " ${INFO}  Xray Core          ${R}"
+    systemctl restart xray 2>/dev/null
+    echo -e "${OK}✔${R}"
+  fi
+
   echo ""
   echo -e " ${OK}✔ Todos los servicios han sido reiniciados.${R}"
   sleep 3
@@ -307,7 +314,7 @@ fun_hysteria_menu() {
   [[ "$opc" != '1' && "$opc" != '01' ]] && { menu; return; }
 
   echo -e "\n ${INFO}Instalando Hysteria UDP Manager...${R}"
-  BASE_URL="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Modulos/udphysteria"
+  BASE_URL="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Modulos/udphysteria"
   wget -q -O /root/install_agnudp.sh  "$BASE_URL/install_agnudp.sh"
   wget -q -O /root/agnudp_manager.sh  "$BASE_URL/agnudp_manager.sh"
 
@@ -428,7 +435,7 @@ fun_slowdns_menu() {
   [[ "$opc" != '1' && "$opc" != '01' ]] && { menu; return; }
 
   echo -e "\n ${INFO}Instalando SlowDNS...${R}\n"
-  wget -q "https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Modulos/slowdns/install" -O /tmp/slowdns_install
+  wget -q "https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Modulos/slowdns/install" -O /tmp/slowdns_install
   if [[ -f /tmp/slowdns_install ]]; then
     chmod +x /tmp/slowdns_install
     bash /tmp/slowdns_install
@@ -439,6 +446,101 @@ fun_slowdns_menu() {
     echo -e " ${INFO}Verifica tu conexión a internet.${R}"
   fi
   sleep 3; menu
+}
+
+# ══════════════════════════════════════════════
+# NUEVO: XRAY MANAGER (Coexistencia con V2Ray)
+# ══════════════════════════════════════════════
+fun_xray_menu() {
+  while true; do
+    clear
+    cabecera "⚙  XRAY CORE MANAGER"
+    echo ""
+    if systemctl is-active --quiet xray 2>/dev/null; then
+      echo -e " ${OK}✔ Xray Core se encuentra actualmente ACTIVADO.${R}"
+      echo ""
+      opcion 1 "REINICIAR SERVICIO XRAY"
+      opcion 2 "DETENER SERVICIO XRAY"
+      opcion 3 "VER CONFIGURACIÓN JSON"
+      opcion 0 "VOLVER AL MENÚ"
+    else
+      echo -e " ${ERR}✘ Xray Core se encuentra actualmente DESACTIVADO / NO INSTALADO.${R}"
+      echo ""
+      opcion 1 "INSTALAR / LEVANTAR XRAY CORE"
+      opcion 0 "VOLVER AL MENÚ"
+    fi
+    echo ""
+    echo -ne " ${OK}Opción ${FLECHA}»${R} "; read xopc
+    case "$xopc" in
+      1|01)
+        clear
+        if systemctl is-active --quiet xray 2>/dev/null; then
+          echo -e " ${INFO}Reiniciando servicio Xray...${R}"
+          systemctl restart xray && echo -e "\n ${OK}✔ Red de Xray reiniciada con éxito.${R}"
+        else
+          echo -e " ${INFO}Descargando e inyectando módulo Xray Core...${R}"
+          # Simula la lógica de instalación nativa en tu script
+          apt-get update -y && apt-get install -y curl unzip -y >/dev/null 2>&1
+          mkdir -p /etc/xray /usr/local/bin
+          curl -L -s https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip -o /tmp/xray.zip
+          unzip -o /tmp/xray.zip xray -d /usr/local/bin/ >/dev/null 2>&1
+          chmod +x /usr/local/bin/xray
+          rm -f /tmp/xray.zip
+          # Crea la plantilla JSON en un puerto que no colisione con V2Ray (ej: 8085)
+          if [[ ! -f /etc/xray/config.json ]]; then
+            cat > /etc/xray/config.json << 'EOF'
+{
+  "log": {"loglevel": "warning"},
+  "inbounds": [{
+    "port": 8085,
+    "listen": "127.0.0.1",
+    "protocol": "vless",
+    "settings": {"clients": [], "decryption": "none"},
+    "streamSettings": {"network": "ws", "wsSettings": {"path": "/xray"}}
+  }],
+  "outbounds": [{"protocol": "freedom", "settings": {}}]
+}
+EOF
+          fi
+          # Levanta el servicio en systemd
+          cat > /etc/systemd/system/xray.service << 'EOF'
+[Unit]
+Description=Xray Core por AVG TEAM
+After=network.target
+
+[Service]
+User=root
+ExecStart=/usr/local/bin/xray run -config /etc/xray/config.json
+Restart=on-failure
+LimitNOFILE=500000
+
+[Install]
+WantedBy=multi-user.target
+EOF
+          systemctl daemon-reload && systemctl enable xray && systemctl start xray
+          echo -e "\n ${OK}✔ Xray Core levantado correctamente en puerto interno 8085.${R}"
+        fi
+        sleep 3.5 ;;
+      2|02)
+        clear
+        if systemctl is-active --quiet xray 2>/dev/null; then
+          echo -e " ${ERR}Deteniendo servicio Xray...${R}"
+          systemctl stop xray && echo -e "\n ${OK}✔ Servicio Xray apagado.${R}"
+          sleep 2
+        fi ;;
+      3|03)
+        clear
+        if [[ -f /etc/xray/config.json ]]; then
+          cabecera "CONFIGURACIÓN ACTUAL DE XRAY"
+          echo ""
+          cat /etc/xray/config.json
+          echo ""
+          echo -ne " ${ERR}[ENTER]${R} para continuar "; read
+        fi ;;
+      0|00) menu; return ;;
+      *) echo -e "\n ${ERR}✘ Opción inválida.${R}"; sleep 1.5 ;;
+    esac
+  done
 }
 
 # ══════════════════════════════════════════════
@@ -458,6 +560,10 @@ menu() {
     stszivpn=$({ command -v zivpn &>/dev/null || [[ -f /usr/local/bin/zivpn ]]; } \
       && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
     stsslowdns=$(pgrep -x slowdns >/dev/null 2>&1 \
+      && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
+    
+    # NUEVO: Estado en tiempo real de Xray Core en el Dashboard
+    stsxray=$(systemctl is-active --quiet xray 2>/dev/null \
       && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
 
     [[ ! -e /usr/lib/licence ]] && rm -rf /bin >/dev/null 2>&1
@@ -496,9 +602,9 @@ menu() {
     # CABECERA DEL MENÚ
     # ════════════════════════════════════════
     echo -e "${BORDE}╔══════════════════════════════════════════════════════════════╗${R}"
-    echo -e "${BORDE}║${TITULO}                     ★  AVG TEAM  ★                         ${R}${BORDE}║${R}"
+    echo -e "${BORDE}║${TITULO}                     ★  AVG TEAM  ★                             ${R}${BORDE}║${R}"
     echo -e "${BORDE}╠══════════════════════════════════════════════════════════════╣${R}"
-    printf "${BORDE}║${R}  ${ERR}%-8s${R}  ${INFO}IP: ${TITULO}%-18s${R}  ${ERR}Hora: ${TITULO}%s${R}      ${BORDE}║${R}\n" \
+    printf "${BORDE}║${R}  %-8s  ${INFO}IP: ${TITULO}%-18s${R}  ${ERR}Hora: ${TITULO}%s${R}      ${BORDE}║${R}\n" \
       "$system" "$IP" "$_hora"
     echo -e "${BORDE}╠════════════════════════╦═════════════════════╦═══════════════╣${R}"
     printf "${BORDE}║${R} ${ERR}RAM Total:${R} ${TITULO}%-7s${R}  ${BORDE}║${R} ${ERR}RAM Uso:${R} ${TITULO}%-8s${R}   ${BORDE}║${R} ${ERR}CPU:${R} ${TITULO}%-5s${R}  ${BORDE}║${R}\n" \
@@ -506,11 +612,11 @@ menu() {
     printf "${BORDE}║${R} ${ERR}Núcleos:${R}   ${TITULO}%-7s${R}  ${BORDE}║${R} ${ERR}Online:${R}  ${TITULO}%-8s${R}   ${BORDE}║${R} ${ERR}Total:${R} ${TITULO}%-5s${R}  ${BORDE}║${R}\n" \
       "$_core" "$_onli" "$_tuser"
     echo -e "${BORDE}╠════════════════════════╩═════════════════════╩═══════════════╣${R}"
-    printf "${BORDE}║${R} ${ERR}Expirados:${R} ${TITULO}%-6s${R}   ${BORDE}║${R}                                            ${BORDE}║${R}\n" \
+    printf "${BORDE}║${R} ${ERR}Expirados:${R} ${TITULO}%-6s${R}   ${BORDE}║                                            ${BORDE}║${R}\n" \
       "$_expuser"
     echo -e "${BORDE}╠══════════════════════════════════════════════════════════════╣${R}"
     # ════════════════════════════════════════
-    # OPCIONES
+    # OPCIONES DEL SISTEMA
     # ════════════════════════════════════════
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}01${BORDE}]${FLECHA}➜${ITEM} CREAR USUARIO          ${BORDE}[${NUM}12${BORDE}]${FLECHA}➜${ITEM} BAD VPN       ${stsu}${BORDE}║${R}"
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}02${BORDE}]${FLECHA}➜${ITEM} ELIMINAR USUARIO       ${BORDE}[${NUM}13${BORDE}]${FLECHA}➜${ITEM} AUTO INICIO  ${autm}${BORDE}║${R}"
@@ -518,11 +624,12 @@ menu() {
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}04${BORDE}]${FLECHA}➜${ITEM} CAMBIAR FECHA          ${BORDE}[${NUM}15${BORDE}]${FLECHA}➜${ITEM} REINICIAR SVC ${BORDE}║${R}"
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}05${BORDE}]${FLECHA}➜${ITEM} ALTERAR LÍMITE         ${BORDE}[${NUM}16${BORDE}]${FLECHA}➜${ITEM} CONTRASEÑA ROOT${BORDE}║${R}"
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}06${BORDE}]${FLECHA}➜${ITEM} CAMBIAR CONTRASEÑA     ${BORDE}[${NUM}17${BORDE}]${FLECHA}➜${ITEM} INFO VPS      ${BORDE}║${R}"
-    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}07${BORDE}]${FLECHA}➜${ITEM} ELIMINAR EXPIRADOS     ${BORDE}[${NUM}18${BORDE}]${FLECHA}➜${ITEM} HYSTERIA UDP ${stshy}${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}07${BORDE}]${FLECHA}➜${ITEM} ELIMINAR EXPIRADOS     ${BORDE}[${NUM}18${BORDE}]${FLECHA}➜${ITEM} HYSTERIA UDP ${sthy}${BORDE}║${R}"
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}08${BORDE}]${FLECHA}➜${ITEM} REPORTE USUARIOS       ${BORDE}[${NUM}19${BORDE}]${FLECHA}➜${ITEM} ZiVPN UDP    ${stszivpn}${BORDE}║${R}"
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}09${BORDE}]${FLECHA}➜${ITEM} PROTOCOLOS ⚡          ${BORDE}[${NUM}20${BORDE}]${FLECHA}➜${ITEM} HERRAMIENTAS  ${BORDE}║${R}"
     echo -e "${BORDE}║${R}  ${BORDE}[${NUM}10${BORDE}]${FLECHA}➜${ITEM} TRÁFICO DE RED         ${BORDE}[${NUM}21${BORDE}]${FLECHA}➜${ITEM} SLOWDNS     ${stsslowdns}${BORDE}║${R}"
-    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}11${BORDE}]${FLECHA}➜${ITEM} OPTIMIZAR SISTEMA      ${BORDE}[${NUM}00${BORDE}]${FLECHA}${ERR} SALIR ✕        ${BORDE}║${R}"
+    echo -e "${BORDE}║${R}  ${BORDE}[${NUM}11${BORDE}]${FLECHA}➜${ITEM} OPTIMIZAR SISTEMA      ${BORDE}[${NUM}22${BORDE}]${FLECHA}➜${ITEM} XRAY CORE   ${stsxray}${BORDE}║${R}" # <-- Inyección Limpia de Xray
+    echo -e "${BORDE}║${R}                                  ${BORDE}[${NUM}00${BORDE}]${FLECHA}${ERR} SALIR ✕        ${BORDE}║${R}"
     echo -e "${BORDE}╚══════════════════════════════════════════════════════════════╝${R}"
     echo -ne " ${OK}Opción ${FLECHA}»${R} "; read x
 
@@ -548,6 +655,7 @@ menu() {
       19)    clear; fun_zivpn_menu ;;
       20)    clear; uteis;             sleep 0.5 ;;
       21)    clear; fun_slowdns_menu ;;
+      22)    clear; fun_xray_menu ;; # <-- Llama al nuevo submenú de gestión
       0|00)
         echo -e "\n ${ERR}Saliendo de AVG TEAM...${R}"
         sleep 1.5; clear; exit ;;

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# * Creado y modificado por t:me/JuanitoProSniif
+# * Creado y modificado por t:me/JM_VPN19
 # ============================================================
 # ============================================================
 # MÓDULO: MODO DE CONEXIÓN — AVG TEAMVPN-SCRIPT v3.1
@@ -29,8 +29,8 @@ _detect_arch() {
     esac
 }
 _ARCH=$(_detect_arch)
-_REPO_BASE="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main"
-_REPO_INST="https://github.com/juanitoprosniff/script_msyvpn/raw/refs/heads/main/installer"
+_REPO_BASE="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main"
+_REPO_INST="https://github.com/Internetjm/SSH_AVG/raw/refs/heads/main/installer"
 _MASTER_PUBKEY="/etc/SSHPlus/master_pubkey.pub"
 
 fun_bar() {
@@ -196,8 +196,8 @@ _instalar_dropbear() {
         # Cambiar identificador SSH visible
         for hdr in sysoptions.h default_options.h; do
             [[ -f "$hdr" ]] && {
-                sed -i 's|^#define LOCAL_IDENT.*|#define LOCAL_IDENT "SSH-2.0-ByJuanitoProSniff"|' "$hdr" 2>/dev/null
-                sed -i 's/SSH-2.0-dropbear/SSH-2.0-ByJuanitoProSniff/g' "$hdr" 2>/dev/null
+                sed -i 's|^#define LOCAL_IDENT.*|#define LOCAL_IDENT "SSH-2.0-ByJM_VPN19"|' "$hdr" 2>/dev/null
+                sed -i 's/SSH-2.0-dropbear/SSH-2.0-ByJM_VPN19/g' "$hdr" 2>/dev/null
             }
         done
 
@@ -520,10 +520,10 @@ fun_inst_dropbear2016() {
 
         # Binario precompilado de Dropbear 2016.74 para amd64/arm64
         # alojado en el mismo repo del script
-        _db_bin_url_amd64="https://github.com/juanitoprosniff/script_msyvpn/raw/refs/heads/main/installer/dropbear2016-bin-amd64"
-        _db_bin_url_arm64="https://github.com/juanitoprosniff/script_msyvpn/raw/refs/heads/main/installer/dropbear2016-bin-arm64"
-        _dbkey_bin_url_amd64="https://github.com/juanitoprosniff/script_msyvpn/raw/refs/heads/main/installer/dropbearkey2016-bin-amd64"
-        _dbkey_bin_url_arm64="https://github.com/juanitoprosniff/script_msyvpn/raw/refs/heads/main/installer/dropbearkey2016-bin-arm64"
+        _db_bin_url_amd64="https://github.com/Internetjm/SSH_AVG/raw/refs/heads/main/installer/dropbear2016-bin-amd64"
+        _db_bin_url_arm64="https://github.com/Internetjm/SSH_AVG/raw/refs/heads/main/installer/dropbear2016-bin-arm64"
+        _dbkey_bin_url_amd64="https://github.com/Internetjm/SSH_AVG/raw/refs/heads/main/installer/dropbearkey2016-bin-amd64"
+        _dbkey_bin_url_arm64="https://github.com/Internetjm/SSH_AVG/raw/refs/heads/main/installer/dropbearkey2016-bin-arm64"
 
         if [[ "$_ARCH" == "arm64" ]]; then
             _db_url="$_db_bin_url_arm64"
@@ -611,7 +611,7 @@ DBEOF
     if [[ ! -f dropbear-2016.74.tar.bz2 ]] || [[ ! -s dropbear-2016.74.tar.bz2 ]]; then
         echo "Descargando Dropbear 2016.74..."
         wget -q --timeout=60 \
-            https://github.com/juanitoprosniff/script_msyvpn/raw/refs/heads/main/installer/dropbear-2016.74.tar.bz2
+            https://github.com/Internetjm/SSH_AVG/raw/refs/heads/main/installer/dropbear-2016.74.tar.bz2
     fi
 
     if [[ ! -s dropbear-2016.74.tar.bz2 ]]; then
@@ -627,11 +627,11 @@ DBEOF
 
     echo "Modificando identificador SSH..."
     if [[ -f sysoptions.h ]]; then
-        sed -i 's|^#define LOCAL_IDENT.*|#define LOCAL_IDENT "SSH-2.0-ByJuanitoProSniff"|' sysoptions.h 2>/dev/null || true
+        sed -i 's|^#define LOCAL_IDENT.*|#define LOCAL_IDENT "SSH-2.0-ByJM_VPN19"|' sysoptions.h 2>/dev/null || true
         echo "✓ Modificado en sysoptions.h"
     elif [[ -f default_options.h ]]; then
-        sed -i 's/#define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION/#define LOCAL_IDENT "SSH-2.0-ByJuanitoProSniff"/' default_options.h 2>/dev/null || true
-        sed -i 's/SSH-2.0-dropbear/SSH-2.0-ByJuanitoProSniff/g' default_options.h 2>/dev/null || true
+        sed -i 's/#define LOCAL_IDENT "SSH-2.0-dropbear_" DROPBEAR_VERSION/#define LOCAL_IDENT "SSH-2.0-ByJM_VPN19"/' default_options.h 2>/dev/null || true
+        sed -i 's/SSH-2.0-dropbear/SSH-2.0-ByJM_VPN19/g' default_options.h 2>/dev/null || true
         echo "✓ Modificado en default_options.h"
     fi
 

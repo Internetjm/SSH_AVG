@@ -1,5 +1,5 @@
 #!/bin/bash
-_lvk=$(wget -qO- https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/versao)
+_lvk=$(wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/versao)
 IP=$(wget -qO- ipv4.icanhazip.com)
 IP2=$(wget -qO- http://whatismyip.akamai.com/)
 [[ "$IP" != "$IP2" ]] && ipdovps="$IP2" || ipdovps="$IP"
@@ -32,7 +32,7 @@ grep -v "^PasswordAuthentication" /etc/ssh/sshd_config >/tmp/passlogin && mv /tm
 echo "PasswordAuthentication yes" >>/etc/ssh/sshd_config
 _dir1='/bin'
 _dir2='/etc/SSHPlus'
-_REPO_BASE="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main"
+_REPO_BASE="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main"
 
 # Mapa: nombre_final:ruta_en_repo
 # Formato: "basename:subcarpeta/archivo"
@@ -117,7 +117,7 @@ clear
 #INICIO AUTOMATICO' >/etc/autostart
 	chmod +x /etc/autostart
 } || {
-	[[ $(ps x | grep "bot_plus" | grep -v grep | wc -l) != '0' ]] && wget -qO- https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Install/ShellBot.sh
+	[[ $(ps x | grep "bot_plus" | grep -v grep | wc -l) != '0' ]] && wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Install/ShellBot.sh
 	for proc in $(ps x | grep 'dmS' | grep -v 'grep' | awk {'print $1'}); do
 		screen -r -S "$proc" -X quit
 done
@@ -136,7 +136,7 @@ crontab -r >/dev/null 2>&1
 	echo "0 */6 * * * /bin/uexpired"
 ) | crontab -
 echo "$_lvk" | sed -n '1 p' | cut -d' ' -f2 >/bin/versao && cat /bin/versao >/home/sshplus
-wget https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Install/jq-linux64 >/dev/null 2>&1
+wget https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Install/jq-linux64 >/dev/null 2>&1
 chmod +x jq-linux64 && mv jq-linux64 $(which jq)
 service cron restart >/dev/null 2>&1
 service ssh restart >/dev/null 2>&1

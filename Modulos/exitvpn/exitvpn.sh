@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# * Creado y modificado por t:me/JuanitoProSniff
+# * Creado y modificado por t:me/JM_VPN19
 # ============================================================
 # EXITVPN_MODULE_VERSION: msyvpn-exitvpn-2
 #

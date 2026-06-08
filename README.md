@@ -1,14 +1,14 @@
 # SCRIPT AVG TEAMVPN 2026 🐒
 ```
-wget https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Plus && chmod 777 Plus && ./Plus
+wget https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Plus && chmod 777 Plus && ./Plus
 ```
 ou
 ```
-bash <(wget -qO- https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/Plus && chmod 777 Plus && ./Plus
+bash <(wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Plus && chmod 777 Plus && ./Plus
 ```
 # Activar Root En VPS o Cambiar Contraseña 
 ```
-bash <(wget -qO- https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main/senharoot)
+bash <(wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/senharoot)
 ```
 
 # AVG TEAM SCRIPT 
