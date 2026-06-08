@@ -1,4 +1,4 @@
-# SCRIPT AVG TEAMVPN 2026 🐒
+# SCRIPT AVG TEAM 2026
 ```
 wget https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Plus && chmod 777 Plus && ./Plus
 ```
@@ -10,10 +10,8 @@ bash <(wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/Plus 
 ```
 bash <(wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/senharoot)
 ```
-
 # AVG TEAM SCRIPT 
 ## :heavy_exclamation_mark: Compatibilidad Actual
-
 * Sistema operativo basado en Linux (Ubuntu Server!)
 * **Ubuntu 18.04 AMD y ARM** ☑️no test
 * **Ubuntu 20.04 AMD y ARM** ✅
@@ -22,3 +20,6 @@ bash <(wget -qO- https://raw.githubusercontent.com/Internetjm/SSH_AVG/main/senha
 * **Ubuntu 25.XX AMD y ARM** ✅
 * **Ubuntu 26.XX AMD** ☑️
 * Se recomienda usar una distribución nueva o formateada
+
+## 📱 Soporte
+Telegram: t.me/JM_VPN19
