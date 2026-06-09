@@ -1,5 +1,18 @@
-#!/bin/bash 
+#!/bin/bash
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        exec sudo bash "$0" "$@"
+    fi
+    echo -e "\033[1;31mDebe ejecutar este script como root o con sudo.\033[0m" >&2
+    exit 1
+fi
+
 database="/root/usuarios.db"
+[[ -s "$database" ]] || database="$HOME/usuarios.db"
+[[ -s "$database" ]] || database="/etc/SSHPlus/usuarios.db"
+[[ -s "$database" ]] || touch "$database" 2>/dev/null
+chmod 644 "$database" 2>/dev/null || true
 if [ ! -f "$database" ]; then
 	echo  -e "\E[38;5;15mARQUIVO $database NÃO ENCONTRADO" ; echo ""
 	exit 1
@@ -7,7 +20,7 @@ else
 	echo ""
 	echo  -e "\E[38;5;15mLISTA DE USUARIOS E SEUS LIMITES:"
 	echo ""
-	_userT=$(awk -F: '$3>=1000 {print $1}' /etc/passwd | grep -v nobody)
+	_userT=$(awk -F: '$3>=1000 && $3<65000 {print $1}' /etc/passwd 2>/dev/null | grep -vE '^(nobody|root|daemon|bin|sys|sync|games|man|lp|mail|news|uucp|proxy|www-data|backup|list|irc|gnats|systemd-.*)$')
 	i=0
 	unset _userPass
 	while read _user; do
@@ -52,10 +65,9 @@ else
 						echo  -e "\E[38;5;15mVOCÊ DEVE DIGITAR UM NÚMERO MAIOR QUE ZERO!" 
 						exit 1
 					else
-						grep -v ^$usuario[[:space:]] /root/usuarios.db > /tmp/a
-						sleep 1
-						mv /tmp/a /root/usuarios.db
-						echo $usuario $sshnum >> /root/usuarios.db
+						grep -v "^${usuario}[[:space:]]" "$database" > /tmp/a 2>/dev/null || true
+						mv /tmp/a "$database" 2>/dev/null || true
+						echo "$usuario $sshnum" >> "$database"
 						echo  -e "\E[38;5;15mLIMITE APLICADO PARA O USUÁRIO $usuario FOI $sshnum " 
 						sleep 2
 						exit

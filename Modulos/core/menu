@@ -276,18 +276,23 @@ reiniciarservicos() {
 # AUTO EJECUCIÓN AL INICIO
 # ══════════════════════════════════════════════
 autoexec() {
-  if grep -q "menu;" /etc/profile 2>/dev/null; then
+  _auto_inicio_activo() {
+    grep -Eq '^[[:space:]]*menu;?[[:space:]]*$' /etc/profile 2>/dev/null
+  }
+
+  if _auto_inicio_activo; then
     clear
     echo -e " ${ERR}Desactivando auto ejecución...${R}"
-    offautmenu() { sed -i '/menu;/d' /etc/profile; }
+    offautmenu() { sed -i '/^[[:space:]]*menu;*[[:space:]]*$/d' /etc/profile; }
     fun_bar 'offautmenu'
     echo -e "\n ${ERR}✘ Auto ejecución DESACTIVADA.${R}"
   else
     clear
     echo -e " ${OK}Activando auto ejecución...${R}"
     autmenu() {
-      grep -v "^menu;" /etc/profile > /tmp/tmpass && mv /tmp/tmpass /etc/profile
-      echo "menu;" >> /etc/profile
+      touch /etc/profile
+      sed -i '/^[[:space:]]*menu;*[[:space:]]*$/d' /etc/profile
+      printf '%s\n' 'menu;' >> /etc/profile
     }
     fun_bar 'autmenu'
     echo -e "\n ${OK}✔ Auto ejecución ACTIVADA.${R}"
@@ -551,7 +556,10 @@ menu() {
   while true; do
 
     # ── Estado de servicios ──────────────────
-    autm=$(grep -q "menu;" /etc/profile 2>/dev/null \
+    _auto_inicio_activo() {
+      grep -Eq '^[[:space:]]*menu;?[[:space:]]*$' /etc/profile 2>/dev/null
+    }
+    autm=$(_auto_inicio_activo \
       && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
     stsu=$(pgrep -x udpvpn >/dev/null 2>&1 \
       && echo -e "${OK}[ON] ${R}" || echo -e "${ERR}[OFF]${R}")
@@ -597,6 +605,8 @@ menu() {
     _core=$(grep -c 'cpu[0-9]' /proc/stat)
     _hora=$(printf '%(%H:%M:%S)T')
     _tuser=$(awk -F: '$3>=1000{print $1}' /etc/passwd | grep -v nobody | wc -l)
+    _ssh_ports=$(grep -E '^[[:space:]]*Port[[:space:]]+[0-9]+' /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}' | sort -u | xargs)
+    [[ -z "$_ssh_ports" ]] && _ssh_ports="22"
 
     # ════════════════════════════════════════
     # CABECERA DEL MENÚ
@@ -604,16 +614,12 @@ menu() {
     echo -e "${BORDE}╔══════════════════════════════════════════════════════════════╗${R}"
     echo -e "${BORDE}║${TITULO}                     ★  AVG TEAM  ★                             ${R}${BORDE}║${R}"
     echo -e "${BORDE}╠══════════════════════════════════════════════════════════════╣${R}"
-    printf "${BORDE}║${R}  %-8s  ${INFO}IP: ${TITULO}%-18s${R}  ${ERR}Hora: ${TITULO}%s${R}      ${BORDE}║${R}\n" \
+    printf "${BORDE}║${R}  %-8s  ${INFO}IP:${R} ${TITULO}%-18s${R}  ${ERR}Hora:${R} ${TITULO}%s${R}   ${BORDE}║${R}\n" \
       "$system" "$IP" "$_hora"
-    echo -e "${BORDE}╠════════════════════════╦═════════════════════╦═══════════════╣${R}"
-    printf "${BORDE}║${R} ${ERR}RAM Total:${R} ${TITULO}%-7s${R}  ${BORDE}║${R} ${ERR}RAM Uso:${R} ${TITULO}%-8s${R}   ${BORDE}║${R} ${ERR}CPU:${R} ${TITULO}%-5s${R}  ${BORDE}║${R}\n" \
-      "$_ram" "$_usor" "$_usop"
-    printf "${BORDE}║${R} ${ERR}Núcleos:${R}   ${TITULO}%-7s${R}  ${BORDE}║${R} ${ERR}Online:${R}  ${TITULO}%-8s${R}   ${BORDE}║${R} ${ERR}Total:${R} ${TITULO}%-5s${R}  ${BORDE}║${R}\n" \
-      "$_core" "$_onli" "$_tuser"
-    echo -e "${BORDE}╠════════════════════════╩═════════════════════╩═══════════════╣${R}"
-    printf "${BORDE}║${R} ${ERR}Expirados:${R} ${TITULO}%-6s${R}   ${BORDE}║                                            ${BORDE}║${R}\n" \
-      "$_expuser"
+    printf "${BORDE}║${R} ${ERR}RAM:${R} ${TITULO}%-7s${R}  ${ERR}Uso:${R} ${TITULO}%-6s${R}  ${ERR}CPU:${R} ${TITULO}%-5s${R}  ${ERR}Núcleos:${R} ${TITULO}%-2s${R}  ${ERR}Online:${R} ${TITULO}%-3s${R}  ${ERR}Total:${R} ${TITULO}%-3s${R} ${BORDE}║${R}\n" \
+      "$_ram" "$_usor" "$_usop" "$_core" "$_onli" "$_tuser"
+    printf "${BORDE}║${R} ${ERR}Puertos:${R} ${TITULO}%-28s${R} ${ERR}Expirados:${R} ${TITULO}%s${R} ${BORDE}║${R}\n" \
+      "$_ssh_ports" "$_expuser"
     echo -e "${BORDE}╠══════════════════════════════════════════════════════════════╣${R}"
     # ════════════════════════════════════════
     # OPCIONES DEL SISTEMA

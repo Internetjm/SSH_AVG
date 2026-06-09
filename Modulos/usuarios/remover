@@ -1,4 +1,13 @@
-#!/bin/bash 
+#!/bin/bash
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        exec sudo bash "$0" "$@"
+    fi
+    echo -e "\033[1;31mDebe ejecutar este script como root o con sudo.\033[0m" >&2
+    exit 1
+fi
+
 remove_ovp () {
 if [[ -e /etc/debian_version ]]; then
 	GROUPNAME=nogroup
@@ -18,6 +27,10 @@ chown nobody:$GROUPNAME /etc/openvpn/crl.pem
 } > /dev/null 2>&1
 [[ ! -e /usr/lib/sshplus ]] && rm -rf /bin/ > /dev/null 2>&1
 database="/root/usuarios.db"
+[[ -s "$database" ]] || database="$HOME/usuarios.db"
+[[ -s "$database" ]] || database="/etc/SSHPlus/usuarios.db"
+[[ -s "$database" ]] || touch "$database" 2>/dev/null
+chmod 644 "$database" 2>/dev/null || true
 tput reset
 echo -e "\033[0;34m┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\033[0m"
 echo -e "\033[0;34m┃\E[44;1;37m           REMOVER USUARIO SSH           \E[0m\033[0;34m┃"
@@ -33,7 +46,10 @@ echo -e "\E[44;1;37m           REMOVER USUARIO SSH \E[0m"
 echo ""
 echo -e "\033[1;33mLISTA DE USUARIOS: \033[0m"
 echo""
-_userT=$(awk -F: '$3>=1000 {print $1}' /etc/passwd | grep -v nobody)
+_userT=$(awk 'NR==FNR{seen[$1]=1; next} ($1 !~ /^(nobody|root|daemon|bin|sys|sync|games|man|lp|mail|news|uucp|proxy|www-data|backup|list|irc|gnats|nobody|systemd-.*)$/ && $1 != "" && ($1 in seen)) {print $1}' "$database" <(awk -F: '$3>=1000 && $3<65000 {print $1}' /etc/passwd 2>/dev/null) 2>/dev/null)
+if [[ -z "$_userT" ]]; then
+    _userT=$(awk -F: '$3>=1000 && $3<65000 {print $1}' /etc/passwd 2>/dev/null | grep -vE '^(nobody|root|daemon|bin|sys|sync|games|man|lp|mail|news|uucp|proxy|www-data|backup|list|irc|gnats|systemd-.*)$')
+fi
 i=0
 unset _userPass
 while read _user; do
@@ -44,7 +60,7 @@ while read _user; do
 	_userPass+="\n${_oP}:${_user}"
 done <<< "${_userT}"
 echo ""
-num_user=$(awk -F: '$3>=1000 {print $1}' /etc/passwd | grep -v nobody | wc -l)
+num_user=$(printf '%s\n' "$_userT" | awk 'NF{c++} END{print c+0}')
 echo -ne "\033[1;32mDIGITE OU SELECIONE UM USUARIO \033[1;33m[\033[1;36m1\033[1;31m-\033[1;36m$num_user\033[1;33m]\033[1;37m: " ; read option
 user=$(echo -e "${_userPass}" | grep -E "\b$option\b" | cut -d: -f2)
 if [[ -z $option ]]; then
@@ -67,7 +83,8 @@ else
 		pkill -f "$user" > /dev/null 2>/dev/null
 		userdel --force $user > /dev/null 2>/dev/null
 		echo -e "\E[41;1;37m USUARIO $user REMOVIDO COM SUCESSO! \E[0m"
-		grep -v ^$user[[:space:]] /root/usuarios.db > /tmp/ph ; cat /tmp/ph > /root/usuarios.db
+		grep -v "^${user}[[:space:]]" "$database" > /tmp/ph 2>/dev/null || true
+		cat /tmp/ph > "$database" 2>/dev/null || true
 		rm /etc/SSHPlus/senha/$user 1>/dev/null 2>/dev/null
 		if [[ -e /etc/openvpn/server.conf ]]; then
 			remove_ovp $user
@@ -80,7 +97,8 @@ else
 			userdel --force $user > /dev/null 2>/dev/null
 			echo ""
 			echo -e "\E[41;1;37m USUARIO $user REMOVIDO COM SUCESSO! \E[0m"
-			grep -v ^$user[[:space:]] /root/usuarios.db > /tmp/ph ; cat /tmp/ph > /root/usuarios.db
+			grep -v "^${user}[[:space:]]" "$database" > /tmp/ph 2>/dev/null || true
+			cat /tmp/ph > "$database" 2>/dev/null || true
 			rm /etc/SSHPlus/senha/$user 1>/dev/null 2>/dev/null
 			if [[ -e /etc/openvpn/server.conf ]]; then
 				remove_ovp $user
@@ -94,7 +112,8 @@ else
 			pkill -f "$user" > /dev/null 2>&1
 			deluser --force $user > /dev/null 2>&1
 			echo -e "\E[41;1;37m USUARIO $user REMOVIDO COM SUCESSO! \E[0m"
-			grep -v ^$user[[:space:]] /root/usuarios.db > /tmp/ph ; cat /tmp/ph > /root/usuarios.db
+			grep -v "^${user}[[:space:]]" "$database" > /tmp/ph 2>/dev/null || true
+			cat /tmp/ph > "$database" 2>/dev/null || true
 			rm /etc/SSHPlus/senha/$user 1>/dev/null 2>/dev/null
 			if [[ -e /etc/openvpn/server.conf ]]; then
 				remove_ovp $user
@@ -125,7 +144,7 @@ echo -e "\E[44;1;37mREMOVER USUARIO SSH  \E[0m"
 		   remove_ovp $user
 		fi
 		done
-		rm $HOME/usuarios.db && touch $HOME/usuarios.db
+		rm -f /root/usuarios.db && touch /root/usuarios.db
         rm *.zip > /dev/null 2>&1
 		echo -e "\n\033[1;32mUSUARIOS REMOVIDOS COM SUCESSO!\033[0m"
 		echo -e "\n\033[1;31mRETORNANDO...\033[0m"

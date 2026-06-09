@@ -52,23 +52,37 @@ fun_badvpn() {
 			tput reset
 			# Instalar badvpn si no existe el binario
 			inst_udp() {
-				cd $HOME
-				# Intentar descarga del binario precompilado
-				wget -q "https://github.com/VENHABRABO/SSHPLUS-NEW/raw/main/Install/badvpn-udpgw" -O /bin/badvpn-udpgw 2>/dev/null
-				# Si falla, intentar compilar desde fuente
-				if [[ ! -s /bin/badvpn-udpgw ]]; then
-					apt-get update -y >/dev/null 2>&1
-					apt-get install -y cmake make gcc libnss3-dev libssl-dev >/dev/null 2>&1
-					wget -q "https://github.com/ambrop72/badvpn/archive/master.tar.gz" -O /tmp/badvpn.tar.gz
-					cd /tmp && tar -xzf badvpn.tar.gz
-					cd /tmp/badvpn-master
-					cmake -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1 . >/dev/null 2>&1
-					make >/dev/null 2>&1
-					cp /tmp/badvpn-master/udpgw/badvpn-udpgw /bin/badvpn-udpgw
-					cd $HOME
-					rm -rf /tmp/badvpn-master /tmp/badvpn.tar.gz
+				mkdir -p /bin
+				local _repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+
+				# 1) Usar el binario incluido en este repositorio si existe
+				if [[ -n "$_repo_root" && -s "$_repo_root/Install/badvpn-udpgw" ]]; then
+					cp -f "$_repo_root/Install/badvpn-udpgw" /bin/badvpn-udpgw 2>/dev/null || true
 				fi
-				chmod 755 /bin/badvpn-udpgw
+
+				# 2) Fallback a la descarga directa desde GitHub
+				if [[ ! -s /bin/badvpn-udpgw ]]; then
+					wget -q --timeout=30 "https://github.com/VENHABRABO/SSHPLUS-NEW/raw/main/Install/badvpn-udpgw" -O /bin/badvpn-udpgw 2>/dev/null || true
+				fi
+
+				# 3) Último recurso: compilar desde fuente y copiar el binario real generado
+				if [[ ! -s /bin/badvpn-udpgw ]]; then
+					apt-get update -y >/dev/null 2>&1 || true
+					apt-get install -y cmake make gcc libnss3-dev libssl-dev >/dev/null 2>&1 || true
+					wget -q --timeout=60 "https://github.com/ambrop72/badvpn/archive/master.tar.gz" -O /tmp/badvpn.tar.gz 2>/dev/null || true
+					if [[ -s /tmp/badvpn.tar.gz ]]; then
+						mkdir -p /tmp/badvpn-build
+						tar -xzf /tmp/badvpn.tar.gz -C /tmp/badvpn-build --strip-components=1
+						cmake -S /tmp/badvpn-build -B /tmp/badvpn-build/build -DBUILD_NOTHING_BY_DEFAULT=1 -DBUILD_UDPGW=1 >/dev/null 2>&1 || true
+						cmake --build /tmp/badvpn-build/build --target udpgw -j"$(nproc 2>/dev/null || echo 1)" >/dev/null 2>&1 || true
+						for _bin in /tmp/badvpn-build/build/udpgw/badvpn-udpgw /tmp/badvpn-build/udpgw/badvpn-udpgw /tmp/badvpn-build/badvpn-master/udpgw/badvpn-udpgw; do
+							[[ -x "$_bin" ]] && cp -f "$_bin" /bin/badvpn-udpgw 2>/dev/null && break
+						done
+						rm -rf /tmp/badvpn-build /tmp/badvpn.tar.gz 2>/dev/null || true
+					fi
+				fi
+
+				chmod 755 /bin/badvpn-udpgw 2>/dev/null || true
 			}
 
 			fun_udpon() {

@@ -1475,21 +1475,29 @@ fun_conexao() {
         }
 
         _py_active=$(ss -tlpn 2>/dev/null | grep -E 'python|python3' | awk '{print $4}' | rev | cut -d: -f1 | rev | xargs)
+        [[ -z "$_py_active" ]] && _py_active=$(grep -E 'wsproxy|proxy\.py|open\.py' /etc/autostart 2>/dev/null | head -1 | tr -d '\n')
         [[ -n "$_py_active" ]] && echo -e "\033[1;32mPROXY SOCKS\033[1;31m: \033[1;37m$_py_active"
 
-        [[ -e "/etc/stunnel/stunnel.conf" ]] && echo -e "\033[1;32mSSL\033[1;31m: \033[1;37m$(get_ports_by_process 'stunnel')"
+        _ssl_cfg=0
+        [[ -e "/etc/stunnel/stunnel.conf" ]] && _ssl_cfg=1
+        grep -q 'ssldispatcher.py' /etc/autostart 2>/dev/null && _ssl_cfg=1
+        [[ -n "$(get_ports_by_process 'stunnel' 2>/dev/null)" ]] && _ssl_cfg=1
+        [[ "$_ssl_cfg" -eq 1 ]] && echo -e "\033[1;32mSSL\033[1;31m: \033[1;37m$(get_ports_by_process 'stunnel' 2>/dev/null || echo 'configurado')"
 
         # ── Status para el menú ───────────────────────────────
         [[ -n "$_py_active" ]] && sts4="\033[1;32m✓ " || sts4="\033[1;31m✕ "
-        [[ -e "/etc/stunnel/stunnel.conf" ]] && sts3="\033[1;32m✓ " || sts3="\033[1;31m✕ "
-        [[ "$_db16_on" != '0' ]] && db16sts="\033[1;32m✓ " || db16sts="\033[1;31m✕ "
+        [[ "$_ssl_cfg" -eq 1 ]] && sts3="\033[1;32m✓ " || sts3="\033[1;31m✕ "
+        [[ "$_db16_on" != '0' || -d /opt/dropbear-2016 || -d /opt/dropbear-2020 || -d /opt/dropbear-2022 ]] && db16sts="\033[1;32m✓ " || db16sts="\033[1;31m✕ "
         sysctl net.ipv4.tcp_congestion_control 2>/dev/null | grep -q "bbr" \
+            || grep -q 'tcp_congestion_control.*bbr' /etc/sysctl.conf /etc/sysctl.d/*.conf 2>/dev/null \
             && turbo_sts="\033[1;32m✓ " || turbo_sts="\033[1;31m✕ "
         [[ -f "$_MASTER_PUBKEY" && -s "$_MASTER_PUBKEY" ]] \
             && mk_sts="\033[1;32m✓ " || mk_sts="\033[1;31m✕ "
         systemctl is-active --quiet avgvpn-conteo 2>/dev/null \
+            || grep -q 'avgvpn-conteo' /etc/autostart /etc/systemd/system/*.service 2>/dev/null \
             && conteo_sts="\033[1;32m✓ " || conteo_sts="\033[1;31m✕ "
         systemctl is-active --quiet v2ray 2>/dev/null \
+            || [[ -f /etc/SSHPlus/v2ray.sh ]] || ss -tlpn 2>/dev/null | grep -q ':10086 ' \
             && v2ray_sts="\033[1;32m✓ " || v2ray_sts="\033[1;31m✕ "
         if iptables -t mangle -C OUTPUT -j XRAY_SELF 2>/dev/null; then
             exit_sts="\033[1;32m✓ "

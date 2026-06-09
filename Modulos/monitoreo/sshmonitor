@@ -9,10 +9,18 @@
 #   + Lectura directa via /proc — sin parsear logs ni ps con awk
 # ============================================================
 
-[[ ! -e /usr/lib/licence ]] && exit 0
-
 database="/root/usuarios.db"
-[[ ! -f "$database" ]] && exit 0
+[[ -s "$database" ]] || database="$HOME/usuarios.db"
+[[ -s "$database" ]] || database="/etc/SSHPlus/usuarios.db"
+
+if [[ ! -s "$database" ]]; then
+    clear
+    echo -e "\033[1;33mNo hay usuarios SSH registrados para monitorear.\033[0m"
+    echo -e "\033[1;31mBase de datos no encontrada: /root/usuarios.db\033[0m"
+    echo ""
+    sleep 1.5
+    return 0
+fi
 
 # ── Función: contar conexiones Dropbear de un usuario ────────
 # Cuenta procesos cuyo /proc/$pid/exe apunta a un binario dropbear

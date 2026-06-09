@@ -3,8 +3,8 @@
 # SlowDNS Manager — AVG TEAMVPN-SCRIPT
 # Acceso: escribir 'slowdns' en la terminal
 # ============================================================
-_REPO="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main"
-_REPO_RAW="https://github.com/juanitoprosniff/scriptsshmsy/raw/main"
+_REPO="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main"
+_REPO_RAW="https://github.com/Internetjm/SSH_AVG/raw/main"
 
 _slowdns_header() {
     clear
