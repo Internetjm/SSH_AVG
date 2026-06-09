@@ -2,7 +2,7 @@
 # ============================================================
 # * Creado y modificado por t:me/JM_VPN19
 # ============================================================
-# V2RAY_MODULE_VERSION: msyvpn-v2ray-9
+# V2RAY_MODULE_VERSION: avgvpn-v2ray-9
 #
 # MÓDULO V2RAY VLESS — AVG TEAMVPN-SCRIPT
 # - Protocolo: VLESS sobre WebSocket (path /vless)
@@ -43,7 +43,7 @@ _V2RAY_NGINX_PORT="2096"
 _V2RAY_NGINX_HTTP_PORT="2095"
 _V2RAY_REPO_BASE="${_REPO_BASE:-https://raw.githubusercontent.com/Internetjm/SSH_AVG/main}"
 _V2RAY_WSPROXY_PATH="/etc/SSHPlus/wsproxy.py"
-_V2RAY_WSPROXY_VERSION="msyvpn-v2ray-3"
+_V2RAY_WSPROXY_VERSION="avgvpn-v2ray-3"
 
 _v2ray_bin() {
     for b in "${_V2RAY_BIN_CANDIDATES[@]}"; do
@@ -1187,7 +1187,7 @@ _v2ray_activar_todo() {
         [[ -f /etc/default/stunnel4 ]] && sed -i 's/ENABLED=0/ENABLED=1/' /etc/default/stunnel4
         mkdir -p /etc/stunnel
         openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
-            -subj "/C=CO/ST=Colombia/L=Bogota/O=AVG TEAMVPN/CN=msyvpn.local" \
+            -subj "/C=CO/ST=Colombia/L=Bogota/O=AVG TEAMVPN/CN=avgvpn.local" \
             -keyout /etc/stunnel/stunnel.key -out /etc/stunnel/stunnel.crt >/dev/null 2>&1
         cat /etc/stunnel/stunnel.crt /etc/stunnel/stunnel.key > /etc/stunnel/stunnel.pem
         chmod 600 /etc/stunnel/stunnel.pem
@@ -1222,7 +1222,7 @@ EOF
         mkdir -p /etc/stunnel
         if [[ ! -s /etc/stunnel/stunnel.crt || ! -s /etc/stunnel/stunnel.key ]]; then
             openssl req -new -newkey rsa:2048 -days 3650 -nodes -x509 \
-                -subj "/C=CO/ST=Colombia/L=Bogota/O=AVG TEAMVPN/CN=msyvpn.local" \
+                -subj "/C=CO/ST=Colombia/L=Bogota/O=AVG TEAMVPN/CN=avgvpn.local" \
                 -keyout /etc/stunnel/stunnel.key -out /etc/stunnel/stunnel.crt >/dev/null 2>&1
         fi
         cat /etc/stunnel/stunnel.crt /etc/stunnel/stunnel.key > /etc/stunnel/stunnel.pem

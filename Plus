@@ -13,11 +13,14 @@
 # ============================================================
 tput reset
 
-[[ "$(whoami)" != "root" ]] && {
-    echo -e "\033[1;33m[\033[1;31mError\033[1;33m] \033[1;37m- \033[1;33mDebe ejecutar como root\033[0m"
-    rm $HOME/Plus >/dev/null 2>&1
-    exit 0
-}
+if [[ "$(id -u)" -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        exec sudo bash "$0" "$@"
+    fi
+    echo -e "\033[1;31mDebe ejecutar este instalador como root o con sudo.\033[0m" >&2
+    rm -f "$HOME/Plus" >/dev/null 2>&1
+    exit 1
+fi
 
 _lnk=$(echo 'z1:y#x.5s0ul&p4hs$s.0a72d*n-e!v89e032:3r' | sed -e 's/[^a-z.]//ig' | rev)
 _Ink=$(echo '/3×u3#s87r/l32o4×c1a×l1/83×l24×i0b×' | sed -e 's/[^a-z/]//ig')
@@ -270,6 +273,32 @@ else
     echo -e "    \033[1;33m  Instálala desde: Conexión → Clave Maestra [06]\033[0m"
 fi
 
+# ── Configuración base para arranque automático ─────────────
+_configurar_autostart_base() {
+    mkdir -p /etc/SSHPlus
+    touch /etc/autostart
+
+    local _cmds=(
+        "screen -dmS ws80 python3 /etc/SSHPlus/wsproxy.py 80"
+        "screen -dmS ws8080 python3 /etc/SSHPlus/wsproxy.py 8080"
+        "screen -dmS ws8880 python3 /etc/SSHPlus/wsproxy.py 8880"
+        "screen -dmS ssldispatch python3 /etc/SSHPlus/ssldispatcher.py 10443 127.0.0.1:22 127.0.0.1:80"
+        "screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 8 --client-socket-sndbuf 10000"
+    )
+
+    for _cmd in "${_cmds[@]}"; do
+        grep -qxF "$_cmd" /etc/autostart 2>/dev/null || echo "$_cmd" >> /etc/autostart
+    done
+
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl enable ssh >/dev/null 2>&1 || true
+        systemctl enable stunnel4 >/dev/null 2>&1 || true
+        systemctl enable xray >/dev/null 2>&1 || true
+        systemctl enable v2ray >/dev/null 2>&1 || true
+    fi
+}
+_configurar_autostart_base
+
 # ── Finalizar instalación ────────────────────────────────────
 tput reset
 echo -e "              \033[1;33m[\033[1;31m!\033[1;33m] \033[1;32mFINALIZANDO \033[1;33m[\033[1;31m!\033[1;33m] \033[0m"
@@ -277,6 +306,25 @@ echo ""
 echo -e "      \033[1;37mCONCLUYENDO FUNCIONES Y CONFIGURACIONES! \033[0m"
 echo ""
 fun_bar "$_Ink/list $_lnk $_Ink $_1nk $key"
+
+# Reiniciar servicios base para que queden disponibles al salir del instalador
+bash "$HOME/Modulos/sistema/reiniciarservicos" >/dev/null 2>&1 || true
+
+# Levantar los proxy base si están disponibles
+for _cmd in \
+  "screen -dmS ws80 python3 /etc/SSHPlus/wsproxy.py 80" \
+  "screen -dmS ws8080 python3 /etc/SSHPlus/wsproxy.py 8080" \
+  "screen -dmS ws8880 python3 /etc/SSHPlus/wsproxy.py 8880"; do
+  eval "$_cmd" >/dev/null 2>&1 || true
+ done
+
+# Levantar SSL dispatcher si existe
+[[ -f /etc/SSHPlus/ssldispatcher.py ]] && \
+  screen -dmS ssldispatch python3 /etc/SSHPlus/ssldispatcher.py 10443 127.0.0.1:22 127.0.0.1:80 >/dev/null 2>&1 || true
+
+# Levantar badvpn UDP si existe
+[[ -x /bin/badvpn-udpgw ]] && \
+  screen -dmS udpvpn /bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 10000 --max-connections-for-client 8 --client-socket-sndbuf 10000 >/dev/null 2>&1 || true
 
 tput reset
 echo ""

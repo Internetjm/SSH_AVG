@@ -2,7 +2,7 @@
 # ============================================================
 # * Creado y modificado por t:me/JM_VPN19
 # ============================================================
-# EXITVPN_MODULE_VERSION: msyvpn-exitvpn-2
+# EXITVPN_MODULE_VERSION: avgvpn-exitvpn-2
 #
 # MÓDULO SALIDA REMOTA (DOBLE VPN) — AVG TEAMVPN-SCRIPT
 # ------------------------------------------------------------

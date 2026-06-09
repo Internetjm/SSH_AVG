@@ -63,10 +63,10 @@ _IP=$(cat /etc/IP 2>/dev/null | tr -d '\n')
 # los clientes se conectan con insecure=true para aceptar self-signed)
 if [[ ! -s "$_HYST_CERT" || ! -s "$_HYST_KEY" ]]; then
     echo -e "\033[1;33m[Hysteria v1] Generando certificado TLS self-signed...\033[0m"
-    _san="DNS:msyvpn.local"
+    _san="DNS:avgvpn.local"
     [[ -n "$_IP" ]] && _san="${_san},IP:${_IP}"
     openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
-        -subj "/C=CO/ST=Colombia/L=Bogota/O=AVG TEAMVPN/CN=msyvpn.local" \
+        -subj "/C=CO/ST=Colombia/L=Bogota/O=AVG TEAMVPN/CN=avgvpn.local" \
         -addext "subjectAltName=${_san}" \
         -keyout "$_HYST_KEY" -out "$_HYST_CERT" >/dev/null 2>&1
     chmod 600 "$_HYST_KEY" "$_HYST_CERT"

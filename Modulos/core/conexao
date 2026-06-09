@@ -1303,12 +1303,12 @@ fun_instalar_conteo() {
         echo -e "\033[0;34m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\033[0m"
         echo ""
 
-        if systemctl is-active --quiet msyvpn-conteo 2>/dev/null; then
+        if systemctl is-active --quiet avgvpn-conteo 2>/dev/null; then
             local _ip_vps; _ip_vps=$(cat /etc/IP 2>/dev/null || hostname -I | awk '{print $1}')
-            echo -e "\033[1;32m✓ msyvpn-conteo ACTIVO\033[0m"
+            echo -e "\033[1;32m✓ avgvpn-conteo ACTIVO\033[0m"
             echo -e "\033[1;33m  HTTP  → http://$_ip_vps:8081\033[0m"
             echo -e "\033[1;33m  TCP   → $_ip_vps:8082  (fallback)\033[0m"
-            echo -e "\033[1;33m  Token → msyvpn2024secret\033[0m"
+            echo -e "\033[1;33m  Token → avgvpn2024secret\033[0m"
             echo ""
             echo -e "\033[0;34m┃\033[1;31m[\033[1;36m1\033[1;31m] \033[1;33mREINICIAR SERVIDOR                       \033[0;34m┃"
             echo -e "\033[0;34m┃\033[1;31m[\033[1;36m2\033[1;31m] \033[1;33mDETENER Y DESHABILITAR                   \033[0;34m┃"
@@ -1320,20 +1320,20 @@ fun_instalar_conteo() {
             echo -ne "\033[1;32mOpción: \033[1;37m"; read opc_ct
             case "$opc_ct" in
                 1|01)
-                    systemctl restart msyvpn-conteo
+                    systemctl restart avgvpn-conteo
                     echo -e "\n\033[1;32m✓ Servidor reiniciado.\033[0m"; sleep 2 ;;
                 2|02)
-                    systemctl stop msyvpn-conteo
-                    systemctl disable msyvpn-conteo 2>/dev/null
+                    systemctl stop avgvpn-conteo
+                    systemctl disable avgvpn-conteo 2>/dev/null
                     echo -e "\n\033[1;33m✓ Servidor detenido y deshabilitado.\033[0m"; sleep 2 ;;
                 3|03)
                     echo -e "\n\033[1;33mPresiona Ctrl+C para salir de los logs...\033[0m"
                     sleep 1
-                    journalctl -u msyvpn-conteo -f ;;
+                    journalctl -u avgvpn-conteo -f ;;
                 4|04)
                     echo -e "\n\033[1;32mConteos actuales:\033[0m"
                     local _ct
-                    _ct=$(curl -s --max-time 5 -H "X-Token: msyvpn2024secret" "http://127.0.0.1:8081/ct" 2>/dev/null)
+                    _ct=$(curl -s --max-time 5 -H "X-Token: avgvpn2024secret" "http://127.0.0.1:8081/ct" 2>/dev/null)
                     if command -v python3 &>/dev/null; then
                         echo "$_ct" | python3 -m json.tool 2>/dev/null || echo "$_ct"
                     else
@@ -1346,7 +1346,7 @@ fun_instalar_conteo() {
                 *) echo -e "\033[1;31mOpción inválida!\033[0m"; sleep 1 ;;
             esac
         else
-            echo -e "\033[1;31m✕ msyvpn-conteo NO instalado / inactivo\033[0m"
+            echo -e "\033[1;31m✕ avgvpn-conteo NO instalado / inactivo\033[0m"
             echo ""
             echo -e "\033[0;34m┃\033[1;31m[\033[1;36m1\033[1;31m] \033[1;32mINSTALAR SERVIDOR CONTEO ONLINE          \033[0;34m┃"
             echo -e "\033[0;34m┃\033[1;31m[\033[1;36m0\033[1;31m] \033[1;33mVOLVER                                   \033[0;34m┃"
@@ -1366,7 +1366,7 @@ fun_instalar_conteo() {
 # Auto-actualiza si la versión local es vieja.
 # ============================================================
 _V2RAY_MODULE="/etc/SSHPlus/v2ray.sh"
-_V2RAY_REQ_VER="msyvpn-v2ray-9"
+_V2RAY_REQ_VER="avgvpn-v2ray-9"
 mkdir -p /etc/SSHPlus
 
 _v2ray_module_ok() {
@@ -1407,7 +1407,7 @@ fun_v2ray_safe() {
 # Auto-actualiza si la versión local es vieja.
 # ============================================================
 _EXITVPN_MODULE="/etc/SSHPlus/exitvpn.sh"
-_EXITVPN_REQ_VER="msyvpn-exitvpn-2"
+_EXITVPN_REQ_VER="avgvpn-exitvpn-2"
 
 _exitvpn_module_ok() {
     [[ -s "$_EXITVPN_MODULE" ]] && \
@@ -1487,7 +1487,7 @@ fun_conexao() {
             && turbo_sts="\033[1;32m✓ " || turbo_sts="\033[1;31m✕ "
         [[ -f "$_MASTER_PUBKEY" && -s "$_MASTER_PUBKEY" ]] \
             && mk_sts="\033[1;32m✓ " || mk_sts="\033[1;31m✕ "
-        systemctl is-active --quiet msyvpn-conteo 2>/dev/null \
+        systemctl is-active --quiet avgvpn-conteo 2>/dev/null \
             && conteo_sts="\033[1;32m✓ " || conteo_sts="\033[1;31m✕ "
         systemctl is-active --quiet v2ray 2>/dev/null \
             && v2ray_sts="\033[1;32m✓ " || v2ray_sts="\033[1;31m✕ "

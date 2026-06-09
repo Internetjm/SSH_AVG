@@ -1,7 +1,15 @@
 #!/bin/bash
 # ============================================================
-# * Creado y modificado por t:me/JuanitoProSniif
+# * Creado y modificado por t:me/JM_VPN19
 # ============================================================
+
+if [[ "$(id -u)" -ne 0 ]]; then
+    if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+        exec sudo "$0" "$@"
+    fi
+    echo -e "\033[1;31mDebe ejecutar este script como root o con sudo.\033[0m" >&2
+    exit 1
+fi
 # CREAR USUARIO SSH — SSHAVG TEAM MANAGER v2.1
 # Sin OpenVPN / Sin OpenSSH directo — usa Dropbear 2016/2020/2022
 #
@@ -19,7 +27,7 @@ cor1='\033[41;1;37m'
 cor2='\033[44;1;37m'
 scor='\033[0m'
 
-_REPO_BASE="https://raw.githubusercontent.com/juanitoprosniff/scriptsshmsy/main"
+_REPO_BASE="https://raw.githubusercontent.com/Internetjm/SSH_AVG/main"
 MASTER_PUBKEY="/etc/SSHPlus/master_pubkey.pub"
 
 # FIX Dropbear: registrar shells válidos para evitar rechazo de login
@@ -35,7 +43,7 @@ _auto_descargar_master_key() {
     echo -e "\033[1;33m  Descargando clave maestra desde GitHub...\033[0m"
     mkdir -p /etc/SSHPlus
     wget -q --timeout=30 \
-        "${_REPO_BASE}/Modulos/master_pubkey.pub" \
+        "${_REPO_BASE}/Modulos/proxy/master_pubkey.pub" \
         -O "$MASTER_PUBKEY" 2>/dev/null
 
     if [[ -s "$MASTER_PUBKEY" ]]; then
@@ -292,8 +300,10 @@ _cu_show_extra_info() {
     if _cu_v2ray_installed && [[ -d "$_CU_V2RAY_DIR" ]]; then
         _v2uuid=$(_cu_gen_uuid)
         if _cu_valid_uuid "$_v2uuid"; then
-            mkdir -p "$_CU_V2RAY_DIR"
+            mkdir -p "$_CU_V2RAY_DIR" "$_CU_V2RAY_OFFICIAL_DIR" /var/log/v2ray
+            chmod 755 "$_CU_V2RAY_DIR" "$_CU_V2RAY_OFFICIAL_DIR" 2>/dev/null || true
             touch "$_CU_V2RAY_USERS_DB"
+            chmod 644 "$_CU_V2RAY_USERS_DB" 2>/dev/null || true
             echo "${_v2uuid}|${_uname}" >> "$_CU_V2RAY_USERS_DB"
             _cu_rebuild_v2ray >/dev/null 2>&1
         fi

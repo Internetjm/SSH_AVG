@@ -26,7 +26,7 @@ echo -e "╚══════════════════════�
 info "Ubuntu $_UBUNTU_VER detectado"
 
 ARCHIVO_JS="/root/conteo_server.js"
-SERVICIO="/etc/systemd/system/msyvpn-conteo.service"
+SERVICIO="/etc/systemd/system/avgvpn-conteo.service"
 NVM_DIR="/root/.nvm"
 
 # ── Dependencias ──────────────────────────────────────────────────────────────
@@ -72,14 +72,14 @@ cat > "$ARCHIVO_JS" << 'JSEOF'
 /**
  * conteo_server.js - Servidor de conteo online AVG TEAM VPN
  * HTTP :8081 (primario) + TCP :8082 (fallback)
- * t:me/JuanitoProSniif
+ * t:me/JM_VPN19
  */
 'use strict';
 
 const http = require('http');
 const net  = require('net');
 
-const TOKEN = 'msyvpn2024secret';  // Mismo que en ContadorOnlineVPS.java
+const TOKEN = 'avgvpn2024secret';  // Mismo que en ContadorOnlineVPS.java
 const PH    = 8081;                // Puerto HTTP
 const PT    = 8082;                // Puerto TCP fallback
 const TU    = 3 * 60 * 1000;      // Timeout usuario: 3 minutos
@@ -311,7 +311,7 @@ Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=msyvpn-conteo
+SyslogIdentifier=avgvpn-conteo
 Environment=NODE_ENV=production
 Environment=HOME=/root
 
@@ -320,15 +320,15 @@ WantedBy=multi-user.target
 SYSEOF
 
 systemctl daemon-reload 2>/dev/null || true
-systemctl enable msyvpn-conteo 2>/dev/null || true
-systemctl restart msyvpn-conteo 2>/dev/null || service msyvpn-conteo restart 2>/dev/null || true
+systemctl enable avgvpn-conteo 2>/dev/null || true
+systemctl restart avgvpn-conteo 2>/dev/null || service avgvpn-conteo restart 2>/dev/null || true
 sleep 3
 
-if systemctl is-active --quiet msyvpn-conteo 2>/dev/null; then
-    ok "Servicio msyvpn-conteo activo"
+if systemctl is-active --quiet avgvpn-conteo 2>/dev/null; then
+    ok "Servicio avgvpn-conteo activo"
 else
     aviso "Error con systemd. Revisando logs..."
-    journalctl -u msyvpn-conteo -n 15 --no-pager 2>/dev/null || true
+    journalctl -u avgvpn-conteo -n 15 --no-pager 2>/dev/null || true
     echo -e "${AMARILLO}Si el servicio no inicia, ejecuta manualmente:${NC}"
     echo -e "  $NODE_BIN $ARCHIVO_JS &"
 fi
@@ -353,13 +353,13 @@ fi
 # ── Verificación final ────────────────────────────────────────────────────────
 sleep 2
 info "Verificando servidor..."
-CT=$(curl -s -H "X-Token: msyvpn2024secret" "http://127.0.0.1:8081/ct" 2>/dev/null)
-STATUS=$(curl -s -H "X-Token: msyvpn2024secret" "http://127.0.0.1:8081/status" 2>/dev/null)
+CT=$(curl -s -H "X-Token: avgvpn2024secret" "http://127.0.0.1:8081/ct" 2>/dev/null)
+STATUS=$(curl -s -H "X-Token: avgvpn2024secret" "http://127.0.0.1:8081/status" 2>/dev/null)
 
 if echo "$STATUS" | grep -q "uptime"; then
     ok "Servidor HTTP respondiendo correctamente"
 else
-    aviso "Servidor no responde. Revisa: journalctl -u msyvpn-conteo -f"
+    aviso "Servidor no responde. Revisa: journalctl -u avgvpn-conteo -f"
 fi
 
 IP=$(curl -s https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
@@ -369,20 +369,20 @@ echo -e "${VERDE}╔════════════════════
 echo    "║              ✓  INSTALACIÓN COMPLETADA                      ║"
 echo    "╠══════════════════════════════════════════════════════════════╣"
 echo -e "║  Archivo:   /root/conteo_server.js"
-echo -e "║  Servicio:  msyvpn-conteo (systemd)"
+echo -e "║  Servicio:  avgvpn-conteo (systemd)"
 echo -e "║  HTTP:      http://$IP:8081"
 echo -e "║  TCP:       $IP:8082 (fallback)"
-echo -e "║  Token:     msyvpn2024secret"
+echo -e "║  Token:     avgvpn2024secret"
 echo -e "║"
 echo -e "║  En ContadorOnlineVPS.java cambia estas líneas:"
 echo -e "║    VPS_HOST = \"$IP\""
-echo -e "║    TOKEN    = \"msyvpn2024secret\""
+echo -e "║    TOKEN    = \"avgvpn2024secret\""
 echo -e "║"
 echo -e "║  Comandos útiles:"
-echo -e "║  → Logs en vivo:  journalctl -u msyvpn-conteo -f"
-echo -e "║  → Ver conteos:   curl -H 'X-Token: msyvpn2024secret' \\"
+echo -e "║  → Logs en vivo:  journalctl -u avgvpn-conteo -f"
+echo -e "║  → Ver conteos:   curl -H 'X-Token: avgvpn2024secret' \\"
 echo -e "║                        http://127.0.0.1:8081/ct"
-echo -e "║  → Ver usuarios:  curl -H 'X-Token: msyvpn2024secret' \\"
+echo -e "║  → Ver usuarios:  curl -H 'X-Token: avgvpn2024secret' \\"
 echo -e "║                        http://127.0.0.1:8081/debug"
-echo -e "║  → Reiniciar:     systemctl restart msyvpn-conteo"
+echo -e "║  → Reiniciar:     systemctl restart avgvpn-conteo"
 echo -e "╚══════════════════════════════════════════════════════════════╝${NC}"
